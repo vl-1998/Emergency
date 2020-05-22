@@ -77,13 +77,32 @@ public class Simulator {
 			nPaz++;
 			oraArrivo = oraArrivo.plus(T_ARRIVAL);
 		}
+		
+		// Genera TICK iniziale
+		queue.add(new Event(this.oraInizio, EventType.TICK, null));
+	}
+
+	public int getPazientiAbbandonano() {
+		return pazientiAbbandonano;
+	}
+
+	public int getPazientiTot() {
+		return pazientiTot;
+	}
+
+	public int getPazientiDimessi() {
+		return pazientiDimessi;
+	}
+
+	public int getPazientiMorti() {
+		return pazientiMorti;
 	}
 
 	// ESECUZIONE
 	public void run() {
 		while (!this.queue.isEmpty()) {
 			Event e = this.queue.poll();
-			System.out.println(e);
+			System.out.println(e + " Free studios "+this.studiLiberi);
 			processEvent(e);
 		}
 	}
@@ -120,6 +139,8 @@ public class Simulator {
 			break;
 
 		case FREE_STUDIO:
+			if(this.studiLiberi==0) // non ci sono studi liberi
+				break ;
 			Paziente prossimo = attesa.poll();
 			if(prossimo != null) {
 				// fallo entrare
@@ -128,19 +149,20 @@ public class Simulator {
 				// schedula uscita dallo studio
 				if(prossimo.getColore()==CodiceColore.WHITE)
 					queue.add(new Event(e.getTime().plus(DURATION_WHITE),
-							EventType.TREATED, paz));
+							EventType.TREATED, prossimo));
 				else if(prossimo.getColore()==CodiceColore.YELLOW)
 					queue.add(new Event(e.getTime().plus(DURATION_YELLOW),
-							EventType.TREATED, paz));
+							EventType.TREATED, prossimo));
 				else if(prossimo.getColore()==CodiceColore.RED)
 					queue.add(new Event(e.getTime().plus(DURATION_RED),
-							EventType.TREATED, paz));
+							EventType.TREATED, prossimo));
 			}
 			break;
 			
 		case TREATED:
 			// libera lo studio
 			this.studiLiberi++ ;
+			paz.setColore(CodiceColore.OUT);
 			
 			this.pazientiDimessi++;
 			this.queue.add(new Event(e.getTime(), EventType.FREE_STUDIO, null));
@@ -149,6 +171,8 @@ public class Simulator {
 		case TIMEOUT:
 			// esci dalla lista d'attesa
 			attesa.remove(paz);
+			if(paz.getColore()==CodiceColore.OUT)
+				break;
 			
 			switch(paz.getColore()) {
 			case WHITE:
@@ -165,6 +189,8 @@ public class Simulator {
 			case RED:
 				// muore
 				this.pazientiMorti++;
+				paz.setColore(CodiceColore.OUT);
+
 				break;
 			}
 			break;
@@ -175,7 +201,8 @@ public class Simulator {
 						EventType.FREE_STUDIO, null));
 			}
 			
-			this.queue.add(new Event(e.getTime().plus(this.TICK_TIME),
+			if(e.getTime().isBefore(LocalTime.of(23, 30)))
+				this.queue.add(new Event(e.getTime().plus(this.TICK_TIME),
 					EventType.TICK, null));
 			break;
 		}

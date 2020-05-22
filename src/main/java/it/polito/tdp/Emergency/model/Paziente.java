@@ -15,6 +15,7 @@ public class Paziente implements Comparable<Paziente>{
 		YELLOW,
 		RED,
 		BLACK,
+		OUT,
 	}
 	
 	private LocalTime oraArrivo ;
@@ -48,11 +49,15 @@ public class Paziente implements Comparable<Paziente>{
 			return +1 ;
 		} else if(this.colore==CodiceColore.YELLOW) {
 			return -1 ;
-		} else if(this.colore==CodiceColore.YELLOW) {
+		} else if(other.colore==CodiceColore.YELLOW) {
 			return +1 ;
 		}
 		
 		throw new RuntimeException("Comparator<Persona> failed") ;
+	}
+	@Override
+	public String toString() {
+		return "Paziente [" + oraArrivo + ", " + colore + "]";
 	}
 	
 	
